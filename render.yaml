@@ -1,0 +1,52 @@
+services:
+  # -------------------------------------
+  # 1. BACKEND SERVICE (Node + Puppeteer)
+  # -------------------------------------
+  - type: web
+    name: linkedin-backend
+    env: docker # Uses the Dockerfile we created in /backend
+    rootDirectory: backend
+    plan: starter # Recommend 'starter' ($7/mo) because Puppeteer needs RAM. 'Free' might crash.
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: linkedin-db
+          property: connectionString
+      # You will be asked to enter these values in the Render Dashboard
+      - key: LINKEDIN_SESSION_COOKIE
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PHANTOMBUSTER_API_KEY
+        sync: false
+      - key: SEARCH_EXPORT_PHANTOM_ID
+        sync: false
+      - key: CONNECTIONS_EXPORT_PHANTOM_ID
+        sync: false
+
+  # -------------------------------------
+  # 2. FRONTEND SERVICE (React + Nginx)
+  # -------------------------------------
+  - type: web
+    name: linkedin-frontend
+    env: docker # Uses the Dockerfile we created in /frontend
+    rootDirectory: frontend
+    autoDeploy: true
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: linkedin-backend
+          property: url
+
+# -------------------------------------
+# 3. DATABASE (PostgreSQL)
+# -------------------------------------
+databases:
+  - name: linkedin-db
+    databaseName: linkedin_leads
+    user: postgres
+    plan: starter # Free tier available for first 90 days, or $7/mo standard logic
