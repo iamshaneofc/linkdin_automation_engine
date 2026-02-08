@@ -5,6 +5,11 @@ import App from './App.jsx'
 import './index.css'
 import axios from 'axios'
 
+// Set base URL for API requests
+// In development, this falls back to localhost (or Vite proxy handles it)
+// In production, VITE_API_URL must be set (e.g., https://backend-service.onrender.com)
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 import { ToastProvider, useToast } from './components/ui/toast.jsx'
 
 // Global error handler component
@@ -17,11 +22,11 @@ function ErrorHandler({ children }) {
             (response) => response,
             (error) => {
                 // Extract error message
-                const errorMessage = error.response?.data?.error || 
-                                   error.response?.data?.message || 
-                                   error.message || 
-                                   'An unexpected error occurred';
-                
+                const errorMessage = error.response?.data?.error ||
+                    error.response?.data?.message ||
+                    error.message ||
+                    'An unexpected error occurred';
+
                 // Log to console for debugging
                 console.error('🔴 API Error:', {
                     url: error.config?.url,
