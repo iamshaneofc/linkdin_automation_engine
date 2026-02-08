@@ -39,10 +39,9 @@ services:
     autoDeploy: true
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: linkedin-backend
-          property: url
+        value: "https://linkedin-backend.onrender.com" # Placeholder: You must update this in Render Dashboard after Backend URL is generated!
+        # fromService with property 'url' is sometimes flaky or unsupported in Blueprints depending on region/version.
+        # We will set a placeholder to allow creation.
 
 # -------------------------------------
 # 3. DATABASE (PostgreSQL)
@@ -50,5 +49,5 @@ services:
 databases:
   - name: linkedin-db
     databaseName: linkedin_leads
-    user: postgres
+    user: linkedin_user # 'postgres' is reserved
     plan: starter
