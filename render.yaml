@@ -4,9 +4,10 @@ services:
   # -------------------------------------
   - type: web
     name: linkedin-backend
-    env: docker # Uses the Dockerfile we created in /backend
-    rootDirectory: backend
-    plan: starter # Recommend 'starter' ($7/mo) because Puppeteer needs RAM. 'Free' might crash.
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter # Recommend 'starter' ($7/mo) because Puppeteer needs RAM
     autoDeploy: true
     envVars:
       - key: PORT
@@ -15,7 +16,7 @@ services:
         fromDatabase:
           name: linkedin-db
           property: connectionString
-      # You will be asked to enter these values in the Render Dashboard
+      # You need to manually enter values for these in Dashboard
       - key: LINKEDIN_SESSION_COOKIE
         sync: false
       - key: OPENAI_API_KEY
@@ -32,8 +33,9 @@ services:
   # -------------------------------------
   - type: web
     name: linkedin-frontend
-    env: docker # Uses the Dockerfile we created in /frontend
-    rootDirectory: frontend
+    env: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
     autoDeploy: true
     envVars:
       - key: VITE_API_URL
@@ -49,4 +51,4 @@ databases:
   - name: linkedin-db
     databaseName: linkedin_leads
     user: postgres
-    plan: starter # Free tier available for first 90 days, or $7/mo standard logic
+    plan: starter
