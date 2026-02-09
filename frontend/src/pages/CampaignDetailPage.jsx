@@ -443,7 +443,11 @@ export default function CampaignDetailPage() {
         );
 
         if (leadsWithEmail.length === 0) {
-            addToast('No leads have email addresses. Run Contact Scraper first!', 'error');
+            if (selectedLeads.length === 1) {
+                addToast('Email not available for this lead.', 'error');
+            } else {
+                addToast('No leads have email addresses. Run Contact Scraper first!', 'error');
+            }
             return;
         }
 
@@ -498,7 +502,11 @@ export default function CampaignDetailPage() {
         );
 
         if (leadsWithPhone.length === 0) {
-            addToast('No leads have phone numbers. Run Contact Scraper first!', 'error');
+            if (selectedLeads.length === 1) {
+                addToast('Phone number not available for this lead.', 'error');
+            } else {
+                addToast('No leads have phone numbers. Run Contact Scraper first!', 'error');
+            }
             return;
         }
 
