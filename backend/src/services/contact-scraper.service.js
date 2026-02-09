@@ -556,7 +556,18 @@ class ContactScraperService {
             contactInfo.error || null
         ]);
 
-        console.log(`   💾 Stored in cache: ${profileId} (${scrapeStatus})`);
+        console.log(`   💾 Stored in cache: ${profileId}(${scrapeStatus})`);
+
+        // 🆕 Update LEADS table with extracted company if missing
+        if (contactInfo.company) {
+            await pool.query(`
+                UPDATE leads 
+                SET company = $1, updated_at = CURRENT_TIMESTAMP
+                WHERE linkedin_profile_id = $2 
+                  AND(company IS NULL OR company = '' OR company = '-' OR company = 'LinkedIn Member')
+                `, [contactInfo.company, profileId]);
+            console.log(`   🏢 Enriched company data in leads table`);
+        }
     }
 
     /**
@@ -585,13 +596,41 @@ class ContactScraperService {
             // Wait a bit for page to fully render
             await new Promise(resolve => setTimeout(resolve, 2000));
 
+            // 🆕 Extract Company from Intro Card (while on main profile page)
+            console.log('   🔍 Extracting Company Name...');
+            const extractedCompany = await this.page.evaluate(() => {
+                // Method 1: Aria label on company button (most reliable)
+                const companyButton = document.querySelector('button[aria-label^="Current company:"]');
+                if (companyButton) {
+                    return companyButton.getAttribute('aria-label').replace('Current company:', '').trim();
+                }
+
+                // Method 2: Right panel item (logo/text area)
+                const rightLink = document.querySelector('.pv-text-details__right-panel-item-link div');
+                if (rightLink) return rightLink.textContent.trim();
+
+                // Method 3: Experience section (first item)
+                // This is harder because selectors vary, but let's try a common one
+                const expItem = document.querySelector('#experience ~ .pvs-list__outer-container .pvs-entity');
+                if (expItem) {
+                    const spans = Array.from(expItem.querySelectorAll('span[aria-hidden="true"]'));
+                    if (spans.length >= 2) return spans[1].textContent.trim(); // usually 2nd span is company
+                }
+
+                return null;
+            });
+
+            if (extractedCompany) {
+                console.log(`   🏢 Found Company: "${extractedCompany}"`);
+            }
+
             // Click Contact Info button
             console.log('   🔍 Looking for Contact Info button...');
             const clicked = await this.page.evaluate(() => {
-                // Method 1: Find by href containing 'contact-info'
+                // Method 1: Find by href w/ 'contact-info' (Desktop)
                 const contactLinks = Array.from(document.querySelectorAll('a'));
                 const contactLink = contactLinks.find(link =>
-                    link.href && link.href.includes('contact-info')
+                    link.href && link.href.includes('detail/contact-info/')
                 );
 
                 if (contactLink) {
@@ -614,7 +653,11 @@ class ContactScraperService {
 
             if (!clicked) {
                 console.log('   ⚠️  Contact Info button not found');
-                return { email: null, phone: null, birthday: null, website: null };
+                // Return extracted company even if contact info fails
+                return {
+                    company: extractedCompany,
+                    email: null, phone: null, birthday: null, website: null
+                };
             }
 
             console.log('   ✅ Contact Info button clicked');
@@ -690,6 +733,11 @@ class ContactScraperService {
                 return data;
             });
 
+            // Add extracted company to result
+            if (contactData) {
+                contactData.company = extractedCompany;
+            }
+
             // Close modal
             await this.page.evaluate(() => {
                 const closeButton = document.querySelector('[aria-label="Dismiss"]') ||
@@ -713,7 +761,7 @@ class ContactScraperService {
             }
 
         } catch (error) {
-            console.error(`   ❌ Error extracting from ${profileUrl}:`, error.message);
+            console.error(`   ❌ Error extracting from ${profileUrl}: `, error.message);
             throw error; // Re-throw for retry logic
         }
     }
