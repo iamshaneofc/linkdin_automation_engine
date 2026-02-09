@@ -224,7 +224,7 @@ export default function DashboardPage() {
             fill: '#10b981',
             desc: 'Highest relevance matches',
             percentage: totalQualityLeads > 0 ? (lq.primary / totalQualityLeads) * 100 : 0,
-            tag: 'Core',
+            tag: 'Primary',
             tagVariant: 'default'
         },
         {
@@ -234,7 +234,7 @@ export default function DashboardPage() {
             fill: '#3b82f6',
             desc: 'Medium relevance matches',
             percentage: totalQualityLeads > 0 ? (lq.secondary / totalQualityLeads) * 100 : 0,
-            tag: 'Adjacent',
+            tag: 'Secondary',
             tagVariant: 'secondary'
         },
         {
@@ -244,7 +244,7 @@ export default function DashboardPage() {
             fill: '#94a3b8',
             desc: 'Lower relevance matches',
             percentage: totalQualityLeads > 0 ? (lq.tertiary / totalQualityLeads) * 100 : 0,
-            tag: 'Exploratory',
+            tag: 'Tertiary',
             tagVariant: 'outline'
         },
     ].filter(d => d.value > 0);
@@ -570,7 +570,7 @@ export default function DashboardPage() {
                                                                         className="pointer-events-none"
                                                                     >
                                                                         <tspan x="100" dy="-6">{tertiaryVal}</tspan>
-                                                                        <tspan x="100" dy="12" fontSize="9">Exploratory</tspan>
+                                                                        <tspan x="100" dy="12" fontSize="9">Tertiary</tspan>
                                                                     </text>
                                                                 </>
                                                             )}
@@ -605,7 +605,7 @@ export default function DashboardPage() {
                                                                         className="pointer-events-none"
                                                                     >
                                                                         <tspan x="100" dy="-6">{secondaryVal}</tspan>
-                                                                        <tspan x="100" dy="12" fontSize="9">Adjacent</tspan>
+                                                                        <tspan x="100" dy="12" fontSize="9">Secondary</tspan>
                                                                     </text>
                                                                 </>
                                                             )}
@@ -640,7 +640,7 @@ export default function DashboardPage() {
                                                                         className="pointer-events-none"
                                                                     >
                                                                         <tspan x="100" dy="-6">{primaryVal}</tspan>
-                                                                        <tspan x="100" dy="12" fontSize="9">Core</tspan>
+                                                                        <tspan x="100" dy="12" fontSize="9">Primary</tspan>
                                                                     </text>
                                                                 </>
                                                             )}
@@ -651,9 +651,9 @@ export default function DashboardPage() {
                                         </div>
 
                                         <div className="flex items-center gap-4 mt-6 text-xs text-muted-foreground font-medium w-full justify-center">
-                                            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#10b981]"></span>Core</span>
-                                            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#3b82f6]"></span>Adjacent</span>
-                                            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#ef4444]"></span>Exploratory</span>
+                                            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#10b981]"></span>Primary</span>
+                                            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#3b82f6]"></span>Secondary</span>
+                                            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#ef4444]"></span>Tertiary</span>
                                         </div>
                                     </div>
 

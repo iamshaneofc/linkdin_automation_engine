@@ -18,7 +18,8 @@ import {
     getCampaignTemplates,
     scrapeContacts,
     getScrapeStatus,
-    autoConnectCampaign
+    autoConnectCampaign,
+    removeLeadFromCampaign
 } from '../controllers/campaign.controller.js';
 
 const router = Router();
@@ -31,6 +32,7 @@ router.put('/:id', updateCampaign);
 router.post('/:id/duplicate', duplicateCampaign);
 router.get('/:id/leads', getCampaignLeads);
 router.post('/:id/leads', addLeadsToCampaign);
+router.delete('/:id/leads/:leadId', removeLeadFromCampaign);
 router.post('/:id/launch', launchCampaign);
 router.put('/:id/pause', pauseCampaign);
 router.put('/:id/resume', resumeCampaign);

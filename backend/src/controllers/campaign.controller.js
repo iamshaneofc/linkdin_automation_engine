@@ -1163,3 +1163,35 @@ export async function bulkEnrichAndGenerate(req, res) {
         res.status(500).json({ error: err.message });
     }
 }
+
+// DELETE /api/campaigns/:id/leads/:leadId
+export async function removeLeadFromCampaign(req, res) {
+    try {
+        const { id, leadId } = req.params;
+
+        // Check if campaign exists
+        const campaignCheck = await pool.query("SELECT id FROM campaigns WHERE id = $1", [id]);
+        if (campaignCheck.rows.length === 0) {
+            return res.status(404).json({ error: "Campaign not found" });
+        }
+
+        // Delete from campaign_leads
+        const result = await pool.query(
+            "DELETE FROM campaign_leads WHERE campaign_id = $1 AND lead_id = $2 RETURNING *",
+            [id, leadId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Lead not found in this campaign" });
+        }
+
+        return res.json({
+            success: true,
+            message: "Lead removed from campaign"
+        });
+
+    } catch (err) {
+        console.error("Remove lead error:", err);
+        res.status(500).json({ error: err.message });
+    }
+}

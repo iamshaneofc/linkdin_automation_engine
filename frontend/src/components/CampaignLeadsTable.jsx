@@ -1,6 +1,6 @@
 // Campaign Leads Table with checkboxes, Email/Phone, and Auto Connect button
 import { useState } from 'react';
-import { Link as LinkIcon, Info } from 'lucide-react';
+import { Link as LinkIcon, Info, MoreHorizontal, MessageSquare, Mail, Phone, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import {
@@ -14,14 +14,21 @@ import {
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from "./ui/dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 import { cn } from '../lib/utils';
 
-export default function CampaignLeadsTable({ leads, onContactLead, onAutoConnectSelected }) {
+export default function CampaignLeadsTable({ leads, onContactLead, onAutoConnectSelected, onDeleteLead, onSendMessage, onEmailLead, onSmsLead }) {
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [statusDialogOpen, setStatusDialogOpen] = useState(false);
 
@@ -163,15 +170,42 @@ export default function CampaignLeadsTable({ leads, onContactLead, onAutoConnect
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button
-                                            size="sm"
-                                            onClick={() => onContactLead && onContactLead(lead)}
-                                            className="bg-purple-600 hover:bg-purple-500"
-                                            title="Send LinkedIn connection request via PhantomBuster"
-                                        >
-                                            <LinkIcon className="w-3 h-3 mr-1" />
-                                            Auto Connect
-                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <span className="sr-only">Open menu</span>
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuItem onClick={() => onContactLead && onContactLead(lead)}>
+                                                    <LinkIcon className="mr-2 h-4 w-4" />
+                                                    Auto Connect
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => onSendMessage && onSendMessage(lead)}>
+                                                    <MessageSquare className="mr-2 h-4 w-4" />
+                                                    Message Send
+                                                </DropdownMenuItem>
+                                                {lead.email && (
+                                                    <DropdownMenuItem onClick={() => onEmailLead && onEmailLead(lead)}>
+                                                        <Mail className="mr-2 h-4 w-4" />
+                                                        Contact Email
+                                                    </DropdownMenuItem>
+                                                )}
+                                                {lead.phone && (
+                                                    <DropdownMenuItem onClick={() => onSmsLead && onSmsLead(lead)}>
+                                                        <Phone className="mr-2 h-4 w-4" />
+                                                        Contact Phone
+                                                    </DropdownMenuItem>
+                                                )}
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={() => onDeleteLead && onDeleteLead(lead)} className="text-red-500 focus:text-red-500">
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             );

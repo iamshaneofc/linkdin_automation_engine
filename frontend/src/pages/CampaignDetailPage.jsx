@@ -444,9 +444,9 @@ export default function CampaignDetailPage() {
 
         if (leadsWithEmail.length === 0) {
             if (selectedLeads.length === 1) {
-                addToast('Email not available for this lead.', 'error');
+                addToast('email is not available', 'error');
             } else {
-                addToast('No leads have email addresses. Run Contact Scraper first!', 'error');
+                addToast('email is not available', 'error');
             }
             return;
         }
@@ -503,9 +503,9 @@ export default function CampaignDetailPage() {
 
         if (leadsWithPhone.length === 0) {
             if (selectedLeads.length === 1) {
-                addToast('Phone number not available for this lead.', 'error');
+                addToast('phone is not available', 'error');
             } else {
-                addToast('No leads have phone numbers. Run Contact Scraper first!', 'error');
+                addToast('phone is not available', 'error');
             }
             return;
         }
@@ -569,6 +569,85 @@ export default function CampaignDetailPage() {
             }
         } catch (error) {
             const errorMsg = error.response?.data?.error || error.message || 'Auto Connect failed';
+            addToast(`Error: ${errorMsg}`, 'error');
+        }
+    };
+
+    const handleEmailLead = async (lead) => {
+        const leadId = lead.id ?? lead.lead_id;
+        if (!lead.email) {
+            addToast('email is not available', 'error');
+            return;
+        }
+        if (!confirm(`Send personalized email to ${lead.full_name}?`)) return;
+
+        try {
+            const res = await axios.post(`/api/campaigns/${id}/outreach/email`, {
+                leadIds: [leadId],
+                options: {
+                    useAI: true,
+                    subject: `Quick question, {firstName}`,
+                    companyName: 'Your Company',
+                    senderName: 'Your Name'
+                }
+            });
+            if (res.data.success) {
+                addToast(`✅ Email sent to ${lead.full_name}`, 'success');
+            } else {
+                addToast(`⚠️ ${res.data.message}`, 'warning');
+            }
+        } catch (error) {
+            const errorMsg = error.response?.data?.error || error.message;
+            addToast(`Error: ${errorMsg}`, 'error');
+        }
+    };
+
+    const handleSmsLead = async (lead) => {
+        const leadId = lead.id ?? lead.lead_id;
+        if (!lead.phone) {
+            addToast('phone is not available', 'error');
+            return;
+        }
+        if (!confirm(`Send SMS to ${lead.full_name}?`)) return;
+
+        try {
+            const res = await axios.post(`/api/campaigns/${id}/outreach/sms`, {
+                leadIds: [leadId],
+                options: { useAI: true }
+            });
+            if (res.data.success) {
+                addToast(`✅ SMS sent to ${lead.full_name}`, 'success');
+            }
+        } catch (error) {
+            const errorMsg = error.response?.data?.error || error.message;
+            addToast(`Error: ${errorMsg}`, 'error');
+        }
+    };
+
+    const handleSendMessage = async (lead) => {
+        const leadId = lead.id ?? lead.lead_id;
+        addToast(`Generating AI message for ${lead.full_name}...`, 'info');
+        try {
+            await axios.post(`/api/campaigns/${id}/bulk-enrich-generate`, {
+                leadIds: [leadId]
+            });
+            addToast(`✅ Message generated for ${lead.full_name}. Check Approvals tab.`, 'success');
+            fetchCampaignDetails();
+        } catch (error) {
+            const errorMsg = error.response?.data?.error || error.message;
+            addToast(`Error: ${errorMsg}`, 'error');
+        }
+    };
+
+    const handleDeleteLead = async (lead) => {
+        const leadId = lead.id ?? lead.lead_id;
+        if (!confirm(`Remove ${lead.full_name} from this campaign? This cannot be undone.`)) return;
+        try {
+            await axios.delete(`/api/campaigns/${id}/leads/${leadId}`);
+            addToast('Lead removed from campaign', 'success');
+            fetchCampaignDetails();
+        } catch (error) {
+            const errorMsg = error.response?.data?.error || error.message;
             addToast(`Error: ${errorMsg}`, 'error');
         }
     };
@@ -1448,6 +1527,10 @@ export default function CampaignDetailPage() {
                                         leads={leadsForTable}
                                         onContactLead={handleContactLead}
                                         onAutoConnectSelected={handleAutoConnectSelected}
+                                        onDeleteLead={handleDeleteLead}
+                                        onSendMessage={handleSendMessage}
+                                        onEmailLead={handleEmailLead}
+                                        onSmsLead={handleSmsLead}
                                     />
                                 );
                             })()}

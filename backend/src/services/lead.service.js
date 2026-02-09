@@ -10,8 +10,8 @@ function safeTruncate(value, maxLength) {
 export async function saveLead(lead) {
   const query = `
     INSERT INTO leads
-    (linkedin_url, first_name, last_name, full_name, title, company, location, profile_image, source, connection_degree)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+    (linkedin_url, first_name, last_name, full_name, title, company, location, profile_image, source, connection_degree, review_status)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
     ON CONFLICT (linkedin_url) DO UPDATE SET
       first_name = COALESCE(EXCLUDED.first_name, leads.first_name),
       last_name = COALESCE(EXCLUDED.last_name, leads.last_name),
@@ -36,7 +36,8 @@ export async function saveLead(lead) {
     safeTruncate(lead.location, 255),      // VARCHAR(255)
     safeTruncate(lead.profileImage, 500),  // VARCHAR(500)
     safeTruncate(lead.source, 100),        // VARCHAR(100) e.g. 'connections_export', 'search_export'
-    safeTruncate(lead.connectionDegree || lead.connection_degree, 50) // VARCHAR(50) e.g. '1st', '2nd', '3rd'
+    safeTruncate(lead.connectionDegree || lead.connection_degree, 50), // VARCHAR(50) e.g. '1st', '2nd', '3rd'
+    safeTruncate(lead.reviewStatus || lead.review_status || 'to_be_reviewed', 50) // VARCHAR(50) default 'to_be_reviewed'
   ];
 
   const result = await pool.query(query, values);
