@@ -21,7 +21,6 @@
     "node-fetch": "^3.3.2",
     "openai": "^6.16.0",
     "pg": "^8.11.3",
-    "psql": "^0.0.1",
     "puppeteer": "^24.36.1",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
