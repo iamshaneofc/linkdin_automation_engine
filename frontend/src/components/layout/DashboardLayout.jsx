@@ -6,6 +6,8 @@ import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 import { ScottishChemicalIcon } from '../ui/ScottishChemicalLogo';
 
+import logo from '../../assets/logo.jpg';
+
 const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { id: 'search', label: 'Lead Search', icon: Search, path: '/search' },
@@ -58,11 +60,11 @@ export default function DashboardLayout() {
             >
                 {/* Logo */}
                 <div className="h-16 flex items-center px-6 border-b border-border">
-                    {branding.logoUrl ? (
-                        <img src={branding.logoUrl} alt="Logo" className="h-8 w-auto max-w-[140px] object-contain mr-3" />
-                    ) : (
-                        <ScottishChemicalIcon className="w-8 h-8 mr-3 shadow-lg" />
-                    )}
+                    <img
+                        src={branding.logoUrl || logo}
+                        alt="Logo"
+                        className="h-8 w-auto max-w-[140px] object-contain mr-3"
+                    />
                     {sidebarOpen && !branding.logoUrl && (
                         <span className="font-bold text-lg tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-emerald-600 dark:from-slate-200 dark:to-emerald-400">
                             Scottish Chemical
