@@ -80,8 +80,9 @@ export default {
                 "accordion-up": "accordion-up 0.2s ease-out",
             },
             fontFamily: {
-                sans: ['Inter', 'sans-serif'], // Modern font default
-            }
+                sans: ['Inter', 'sans-serif'],
+                heading: ['Space Grotesk', 'sans-serif'],
+            },
         },
     },
     plugins: [tailwindcssAnimate],
