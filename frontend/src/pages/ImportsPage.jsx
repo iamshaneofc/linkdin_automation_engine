@@ -12,6 +12,7 @@ import {
     TableHeader,
     TableRow,
 } from "../components/ui/table";
+import SelfGuidingNote from '../components/SelfGuidingNote';
 
 export default function ImportsPage() {
     const [imports, setImports] = useState([]);
@@ -63,7 +64,7 @@ export default function ImportsPage() {
         try {
             setUploading(true);
             setUploadResult(null);
-            
+
             const res = await axios.post('/api/leads/import-csv', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -80,9 +81,9 @@ export default function ImportsPage() {
             fetchImports();
         } catch (error) {
             console.error('Upload failed:', error);
-            
+
             let errorMessage = 'Failed to upload CSV file';
-            
+
             if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
                 errorMessage = '❌ Backend server is not running! Please start it with: cd backend && npm run dev';
             } else if (error.response?.data?.error) {
@@ -90,7 +91,7 @@ export default function ImportsPage() {
             } else if (error.message) {
                 errorMessage = error.message;
             }
-            
+
             setUploadResult({
                 success: false,
                 message: errorMessage
@@ -113,7 +114,7 @@ export default function ImportsPage() {
         try {
             setDeleting(true);
             setDeleteResult(null);
-            
+
             const res = await axios.delete('/api/leads/csv-imports/all');
 
             setDeleteResult({
@@ -126,9 +127,9 @@ export default function ImportsPage() {
             fetchImports();
         } catch (error) {
             console.error('Delete failed:', error);
-            
+
             let errorMessage = 'Failed to delete CSV leads';
-            
+
             if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
                 errorMessage = '❌ Backend server is not running! Please start it with: cd backend && npm run dev';
             } else if (error.response?.data?.error) {
@@ -136,7 +137,7 @@ export default function ImportsPage() {
             } else if (error.message) {
                 errorMessage = error.message;
             }
-            
+
             setDeleteResult({
                 success: false,
                 message: errorMessage
@@ -164,22 +165,22 @@ export default function ImportsPage() {
                         onChange={handleFileUpload}
                         className="hidden"
                     />
-                    <Button 
-                        onClick={handleFileSelect} 
+                    <Button
+                        onClick={handleFileSelect}
                         disabled={uploading}
                         variant="outline"
                         className="gap-2"
                     >
-                        <Upload className="h-4 w-4" /> 
+                        <Upload className="h-4 w-4" />
                         {uploading ? 'Uploading...' : 'Import CSV'}
                     </Button>
-                    <Button 
-                        onClick={handleDeleteCSVLeads} 
+                    <Button
+                        onClick={handleDeleteCSVLeads}
                         disabled={deleting}
                         variant="destructive"
                         className="gap-2"
                     >
-                        <Trash2 className="h-4 w-4" /> 
+                        <Trash2 className="h-4 w-4" />
                         {deleting ? 'Deleting...' : 'Remove CSV Leads'}
                     </Button>
                     <Button onClick={fetchImports} variant="outline" className="gap-2">
@@ -213,9 +214,9 @@ export default function ImportsPage() {
                                     </div>
                                 )}
                             </div>
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => setUploadResult(null)}
                                 className="h-6 w-6 p-0"
                             >
@@ -246,9 +247,9 @@ export default function ImportsPage() {
                                     </div>
                                 )}
                             </div>
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => setDeleteResult(null)}
                                 className="h-6 w-6 p-0"
                             >
@@ -378,6 +379,14 @@ export default function ImportsPage() {
                     </div>
                 </CardContent>
             </Card>
-        </div>
+
+            <SelfGuidingNote
+                pageName="Imports & Logs"
+                description="Track PhantomBuster imports, duplicates, and system operations."
+                nextPageName="Dashboard"
+                nextPagePath="/"
+                nextPageGlimpse="Get a high-level overview of your lead generation pipeline."
+            />
+        </div >
     );
 }

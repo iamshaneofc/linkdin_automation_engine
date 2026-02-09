@@ -6,6 +6,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { useToast } from '../components/ui/toast';
 import { cn } from '../lib/utils';
 import axios from 'axios';
+import SelfGuidingNote from '../components/SelfGuidingNote';
 
 const TONE_OPTIONS = [
     { value: 'professional', label: 'Professional' },
@@ -114,7 +115,7 @@ export default function ApprovalsPage() {
     };
 
     const toggleSelect = (id) => {
-        setSelectedItems(prev => 
+        setSelectedItems(prev =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
     };
@@ -162,9 +163,9 @@ export default function ApprovalsPage() {
 
             // Update items with new content
             const regeneratedMap = new Map(res.data.items.map(item => [item.id, item.content]));
-            setItems(prev => 
-                prev.map(item => 
-                    regeneratedMap.has(item.id) 
+            setItems(prev =>
+                prev.map(item =>
+                    regeneratedMap.has(item.id)
                         ? { ...item, generated_content: regeneratedMap.get(item.id) }
                         : item
                 )
@@ -213,7 +214,7 @@ export default function ApprovalsPage() {
                 </div>
                 <div className="flex gap-2">
                     {items.length > 0 && (
-                        <Button 
+                        <Button
                             onClick={toggleSelectAll}
                             variant="outline"
                             size="sm"
@@ -225,7 +226,7 @@ export default function ApprovalsPage() {
                     )}
                     {selectedItems.length > 0 && (
                         <>
-                            <Button 
+                            <Button
                                 onClick={() => setShowBulkPersonalizeModal(true)}
                                 variant="outline"
                                 className="gap-2 border-purple-500/30 text-purple-500 hover:bg-purple-500/10"
@@ -233,7 +234,7 @@ export default function ApprovalsPage() {
                                 <RefreshCw className="w-4 h-4" />
                                 Bulk Personalize ({selectedItems.length})
                             </Button>
-                            <Button 
+                            <Button
                                 onClick={handleBulkApprove}
                                 className="gap-2 bg-green-600 hover:bg-green-500"
                             >
@@ -338,7 +339,7 @@ export default function ApprovalsPage() {
                                                 className="w-full min-h-[120px] bg-white/5 border border-primary/30 rounded-lg p-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                                             />
                                             <div className="flex gap-2">
-                                                <Button 
+                                                <Button
                                                     size="sm"
                                                     onClick={() => {
                                                         const content = document.getElementById(`edit-${item.id}`).value;
@@ -353,7 +354,7 @@ export default function ApprovalsPage() {
                                             </div>
                                         </div>
                                     ) : (
-                                        <div 
+                                        <div
                                             className="p-4 bg-white/5 rounded-lg border border-white/10 group cursor-pointer hover:border-primary/30 relative"
                                             onClick={() => setEditingItem(item.id)}
                                         >
@@ -461,14 +462,14 @@ export default function ApprovalsPage() {
                             </div>
 
                             <div className="flex gap-3 justify-end">
-                                <Button 
-                                    variant="ghost" 
+                                <Button
+                                    variant="ghost"
                                     onClick={() => setShowBulkPersonalizeModal(false)}
                                     disabled={bulkPersonalizing}
                                 >
                                     Cancel
                                 </Button>
-                                <Button 
+                                <Button
                                     onClick={handleBulkPersonalize}
                                     disabled={bulkPersonalizing}
                                     className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500"
@@ -490,6 +491,8 @@ export default function ApprovalsPage() {
                     </Card>
                 </div>
             )}
+
+
         </div>
     );
 }

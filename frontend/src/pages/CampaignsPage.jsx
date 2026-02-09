@@ -20,6 +20,7 @@ import {
 } from "../components/ui/dropdown-menu";
 import { useToast } from '../components/ui/toast';
 import { Skeleton, TableSkeleton } from '../components/ui/skeleton';
+import SelfGuidingNote from '../components/SelfGuidingNote';
 
 export default function CampaignsPage() {
     const navigate = useNavigate();
@@ -457,6 +458,14 @@ export default function CampaignsPage() {
                     onCreate={createCampaign}
                 />
             )}
+
+            <SelfGuidingNote
+                pageName="Campaigns"
+                description="Manage your outreach campaigns, track performance, and optimize your strategy."
+                nextPageName="Settings"
+                nextPagePath="/settings"
+                nextPageGlimpse="Configure your account and integration settings."
+            />
         </div>
     );
 }
@@ -505,7 +514,7 @@ function CreateCampaignModal({ onClose, onCreate }) {
     useEffect(() => {
         axios.get('/api/campaigns/templates').then(res => {
             if (Array.isArray(res.data)) setTemplates(res.data);
-        }).catch(() => {});
+        }).catch(() => { });
     }, []);
 
     const handleTemplateSelect = (t) => {
@@ -522,12 +531,12 @@ function CreateCampaignModal({ onClose, onCreate }) {
             addToast('Please enter a campaign name', 'warning');
             return;
         }
-        
+
         // Validate and convert datetime fields - if provided, they must be complete
         // datetime-local format is YYYY-MM-DDTHH:mm
         let scheduleStartISO = undefined;
         let scheduleEndISO = undefined;
-        
+
         if (scheduleStart && scheduleStart.trim()) {
             // Check if datetime is complete (must include 'T' separator)
             if (!scheduleStart.includes('T')) {
@@ -546,7 +555,7 @@ function CreateCampaignModal({ onClose, onCreate }) {
                 return;
             }
         }
-        
+
         if (scheduleEnd && scheduleEnd.trim()) {
             // Check if datetime is complete (must include 'T' separator)
             if (!scheduleEnd.includes('T')) {
@@ -565,7 +574,7 @@ function CreateCampaignModal({ onClose, onCreate }) {
                 return;
             }
         }
-        
+
         // Validate that end date is after start date if both are provided
         if (scheduleStartISO && scheduleEndISO) {
             if (new Date(scheduleEndISO) <= new Date(scheduleStartISO)) {
@@ -573,7 +582,7 @@ function CreateCampaignModal({ onClose, onCreate }) {
                 return;
             }
         }
-        
+
         const tags = tagsStr ? tagsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
         onCreate({
             name: name.trim(),

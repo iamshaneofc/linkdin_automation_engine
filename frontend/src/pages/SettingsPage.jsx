@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '../components/ui/toast';
+import SelfGuidingNote from '@/components/SelfGuidingNote';
 
 const SettingsPage = () => {
     const { addToast } = useToast();
@@ -469,6 +470,14 @@ const SettingsPage = () => {
                     </CardFooter>
                 </Card>
             </div>
+
+            <SelfGuidingNote
+                pageName="Settings"
+                description="Configure your API integrations, security limits, and automation parameters."
+                nextPageName="Dashboard"
+                nextPagePath="/"
+                nextPageGlimpse="Return to dashboard for a high-level overview."
+            />
         </div>
     );
 };

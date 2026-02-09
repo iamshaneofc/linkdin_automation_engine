@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { Search, MoreVertical, RefreshCw, Linkedin, Trash2, Edit2, Download, Filter, ChevronDown, ChevronUp, Loader2, Sparkles, MapPin, Building2, Briefcase, Target, Database, Eye, Check, X, Mail, Phone } from 'lucide-react';
+import { Search, MoreVertical, RefreshCw, Linkedin, Trash2, Edit2, Download, Filter, ChevronDown, ChevronUp, Loader2, Sparkles, MapPin, Building2, Briefcase, Target, Database, Eye, Check, X, Mail, Phone, UserPlus } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -34,6 +34,7 @@ import {
 import { useToast } from './ui/toast';
 import { Skeleton, TableSkeleton } from './ui/skeleton';
 import { FilterLogicBuilder } from './FilterLogicBuilder';
+import SelfGuidingNote from './SelfGuidingNote';
 
 const QUICK_FILTERS = [
     { id: 'ceo_saas', label: 'CEOs in SaaS', preset: { title: 'CEO', industry: 'SaaS' }, icon: Target },
@@ -62,6 +63,7 @@ export default function LeadsTable() {
         industry: searchParams.get('industry') || '',
         company: '',
         quality: searchParams.get('quality') || '', // primary, secondary, tertiary
+        connectionDegree: searchParams.get('connection_degree') || '', // 1st, 2nd, 3rd
         // Status and source
         status: 'all',
         source: 'all',
@@ -97,6 +99,7 @@ export default function LeadsTable() {
             if (metaFilters.source !== 'all') conditions.push({ field: 'source', operator: 'equals', value: metaFilters.source });
             if (metaFilters.hasEmail) conditions.push({ field: 'hasEmail', operator: 'is_true', value: 'true' });
             if (metaFilters.hasLinkedin) conditions.push({ field: 'hasLinkedin', operator: 'is_true', value: 'true' });
+            if (metaFilters.connectionDegree) conditions.push({ field: 'connection_degree', operator: 'equals', value: metaFilters.connectionDegree });
             if (metaFilters.createdFrom) conditions.push({ field: 'created_at', operator: 'after', value: metaFilters.createdFrom }); // Simplified mapping
 
             const newGroups = [];
@@ -154,8 +157,8 @@ export default function LeadsTable() {
 
     // Fetch data on mount
     useEffect(() => {
-        // If industry or quality param is present, expand filters automatically
-        if (searchParams.get('industry') || searchParams.get('quality')) {
+        // If industry, quality, or connection_degree param is present, expand filters automatically
+        if (searchParams.get('industry') || searchParams.get('quality') || searchParams.get('connection_degree')) {
             setShowMetaFilters(true);
             setExpandedSections((prev) => ({
                 ...prev,
@@ -320,6 +323,9 @@ export default function LeadsTable() {
             }
             if (filtersToUse.quality?.trim()) {
                 params.set('quality', filtersToUse.quality.trim());
+            }
+            if (filtersToUse.connectionDegree?.trim()) {
+                params.set('connection_degree', filtersToUse.connectionDegree.trim());
             }
             if (filtersToUse.status && filtersToUse.status !== 'all') {
                 params.set('status', filtersToUse.status);
@@ -968,6 +974,21 @@ export default function LeadsTable() {
                                                                 className="h-9"
                                                             />
                                                         </div>
+                                                        <div className="space-y-1.5">
+                                                            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                                                <UserPlus className="h-3 w-3" /> Connection
+                                                            </label>
+                                                            <select
+                                                                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                                                value={metaFilters.connectionDegree}
+                                                                onChange={(e) => setMetaFilters((f) => ({ ...f, connectionDegree: e.target.value }))}
+                                                            >
+                                                                <option value="">All Degrees</option>
+                                                                <option value="1st">1st Degree</option>
+                                                                <option value="2nd">2nd Degree</option>
+                                                                <option value="3rd">3rd Degree</option>
+                                                            </select>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
@@ -1547,6 +1568,14 @@ export default function LeadsTable() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <SelfGuidingNote
+                pageName="Leads"
+                description="Manage, filter, and organize your potential clients."
+                nextPageName="Campaigns"
+                nextPagePath="/campaigns"
+                nextPageGlimpse="Create outreach campaigns to engage with your leads."
+            />
         </div >
     );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Newspaper, Rss, PenTool } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import SelfGuidingNote from '../components/SelfGuidingNote';
 
 export default function ContentEnginePage() {
     const [posts, setPosts] = useState([]);
@@ -75,6 +76,14 @@ export default function ContentEnginePage() {
                     </div>
                 ))}
             </div>
-        </div>
+
+            <SelfGuidingNote
+                pageName="Content Engine"
+                description="Generate and schedule engaging content for your LinkedIn profile."
+                nextPageName="Settings"
+                nextPagePath="/settings"
+                nextPageGlimpse="Configure system preferences and branding."
+            />
+        </div >
     );
 }

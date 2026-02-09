@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useToast } from '../components/ui/toast';
+import SelfGuidingNote from '../components/SelfGuidingNote';
 
 /** PhantomBuster import source: CONNECTIONS_EXPORT_PHANTOM vs SEARCH_EXPORT_PHANTOM */
 const IMPORT_SOURCE_OPTIONS = [
@@ -193,6 +194,14 @@ export default function LeadSearchPage() {
                     </CardContent>
                 </Card>
             )}
+
+            <SelfGuidingNote
+                pageName="Lead Search"
+                description="Connect to PhantomBuster to find quality leads from LinkedIn and import them directly into your database."
+                nextPageName="Campaigns"
+                nextPagePath="/campaigns"
+                nextPageGlimpse="Launch targeted outreach campaigns to your newly found leads."
+            />
         </div>
     );
 }

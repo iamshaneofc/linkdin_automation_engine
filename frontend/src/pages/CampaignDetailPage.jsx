@@ -51,6 +51,7 @@ import {
     DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import CampaignLeadsTable from '../components/CampaignLeadsTable';
+import SelfGuidingNote from '../components/SelfGuidingNote';
 
 export default function CampaignDetailPage() {
     const { id } = useParams();
@@ -2216,6 +2217,15 @@ export default function CampaignDetailPage() {
                 )}
             </div>
 
+            <div className="mt-8">
+                <SelfGuidingNote
+                    pageName="Campaign Detail"
+                    description="Deep dive into campaign performance, manage leads, and optimize outreach strategy."
+                    nextPageName="Approvals"
+                    nextPagePath="/approvals"
+                    nextPageGlimpse="Review and approve messages generated for this campaign."
+                />
+            </div>
         </div>
     );
 }

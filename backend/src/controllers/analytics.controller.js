@@ -19,12 +19,19 @@ async function loadIndustryMetadata() {
       ORDER BY code
     `);
 
+    const allRows = [];
     const topLevel = {};
     const subcategoriesByTop = {};
 
     for (const row of result.rows) {
       const topName = row.top_level_industry;
       if (!topName) continue;
+
+      // Collect for flat list
+      allRows.push({
+        ...row,
+        normalizedName: normalizeForMatch(row.name)
+      });
 
       // Build top-level industry map
       if (!topLevel[topName]) {
@@ -35,28 +42,74 @@ async function loadIndustryMetadata() {
         };
       }
 
-      // Build sub-categories map
-      if (row.sub_category) {
-        const subName = row.sub_category;
+      // Build sub-categories map (ALL descendants, not just direct children)
+      if (row.name !== topName) {
         if (!subcategoriesByTop[topName]) {
           subcategoriesByTop[topName] = {};
         }
-        if (!subcategoriesByTop[topName][subName]) {
-          subcategoriesByTop[topName][subName] = {
-            code: row.code,
-            name: subName,
-            description: row.description,
-          };
-        }
+        subcategoriesByTop[topName][row.name] = {
+          code: row.code,
+          name: row.name,
+          description: row.description
+        };
       }
     }
 
-    INDUSTRY_METADATA_CACHE = { topLevel, subcategoriesByTop };
+    // Sort all rows:
+    // 1. Sub-categories FIRST (so we match "Accounting" before "Professional Services" if text has both)
+    // 2. Length descending (so we match "Residential Construction" before "Construction")
+    const sortedIndustries = allRows.sort((a, b) => {
+      const aIsSub = a.name !== a.top_level_industry;
+      const bIsSub = b.name !== b.top_level_industry;
+
+      if (aIsSub && !bIsSub) return -1;
+      if (!aIsSub && bIsSub) return 1;
+
+      return b.name.length - a.name.length;
+    });
+
+    // --- FIX FOR "Technology, Information and Media" ---
+    // The DB might not distinctively group tech under this name (e.g. might be in "Professional Services").
+    // But our config uses "Technology, Information and Media". To ensure sub-categories match,
+    // we aggregate relevant tech sub-categories into this bucket.
+    if (!subcategoriesByTop["Technology, Information and Media"]) {
+      subcategoriesByTop["Technology, Information and Media"] = {};
+    }
+
+    // Populate the Tech bucket with any industry looking like tech
+    allRows.forEach(row => {
+      const name = row.name.toLowerCase();
+      // Keywords that signal a tech sub-industry
+      const isTech =
+        name.includes("software") ||
+        name.includes("technology") ||
+        name.includes("information services") ||
+        name.includes("internet") ||
+        name.includes("computer") ||
+        name.includes("it services") ||
+        name.includes("data") ||
+        name.includes("telecom") ||
+        name.includes("network") ||
+        name.includes("electronics") ||
+        name.includes("media") ||
+        name.includes("game development");
+
+      if (isTech) {
+        subcategoriesByTop["Technology, Information and Media"][row.name] = {
+          code: row.code,
+          name: row.name,
+          description: row.description
+        };
+      }
+    });
+
+    INDUSTRY_METADATA_CACHE = { topLevel, subcategoriesByTop, sortedIndustries };
   } catch (err) {
     console.error(
       "[analytics.controller] Failed to load LinkedIn industry metadata from database:",
       err.message
     );
+    // Fallback? or just empty
     INDUSTRY_METADATA_CACHE = {
       topLevel: {},
       subcategoriesByTop: {},
@@ -64,6 +117,12 @@ async function loadIndustryMetadata() {
   }
 
   return INDUSTRY_METADATA_CACHE;
+}
+
+// Helper: Normalize text for matching (remove punctuation, lower case)
+function normalizeForMatch(text) {
+  if (!text) return '';
+  return text.toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 // Map period to SQL interval
@@ -80,7 +139,7 @@ export async function getDashboardAnalytics(req, res) {
     const interval = intervalForPeriod(period);
 
     // Load LinkedIn industry hierarchy (top-level + sub-categories)
-    const { topLevel: industryMetaTop, subcategoriesByTop } =
+    const { topLevel, subcategoriesByTop, sortedIndustries } =
       await loadIndustryMetadata();
 
     // —— Lead Scraping & Extraction ——
@@ -138,53 +197,71 @@ export async function getDashboardAnalytics(req, res) {
         }
       }
 
-      // First, match the lead to one of the 20 top-level industries using keywords
-      for (const [industry, keywords] of Object.entries(industryKeywords)) {
-        if (keywords.some((k) => text.includes(k.toLowerCase()))) {
-          industryCounts[industry] = (industryCounts[industry] || 0) + 1;
-          matchedIndustry = industry;
-          // Bonus score if the industry matches a preference keyword
-          if (preferredKeywords.some(pk => industry.toLowerCase().includes(pk))) {
-            score += 20;
+      // --- NEW MATCHING LOGIC ---
+
+      const normalizedText = normalizeForMatch(text);
+      let foundTopLevel = null;
+      let foundSubName = null;
+
+      // 1. Exact/Longest Sub-string Match against ALL industries
+      for (const ind of sortedIndustries) {
+        if (normalizedText.includes(ind.normalizedName)) {
+          foundTopLevel = ind.top_level_industry;
+          // If the matched industry is NOT the top level itself, it's a sub-category
+          if (ind.name !== ind.top_level_industry) {
+            foundSubName = ind.name;
           }
-          break;
+          break; // Stop at first (longest) match
         }
       }
 
-      if (!matchedIndustry) {
-        industryCounts['Other'] = (industryCounts['Other'] || 0) + 1;
-      } else {
-        // Then, if we have LinkedIn sub-categories for this top-level industry,
-        // try to map the lead into one sub-category using the sub-category name
-        const subMetaForIndustry = subcategoriesByTop[matchedIndustry];
-        if (subMetaForIndustry) {
-          const lowerText = text;
-          let matchedSubName = null;
-
-          for (const [subName, meta] of Object.entries(subMetaForIndustry)) {
-            // Use simple token-based matching on the sub industry name
-            const tokens = meta.name
-              .toLowerCase()
-              .split(/[\s,&\/-]+/)
-              .filter((t) => t.length > 2);
-
-            if (!tokens.length) continue;
-
-            // Require that at least one significant token matches
-            if (tokens.some((t) => lowerText.includes(t))) {
-              matchedSubName = subName;
-              break;
-            }
-          }
-
-          if (matchedSubName) {
-            if (!subIndustryCounts[matchedIndustry]) {
-              subIndustryCounts[matchedIndustry] = {};
-            }
-            subIndustryCounts[matchedIndustry][matchedSubName] =
-              (subIndustryCounts[matchedIndustry][matchedSubName] || 0) + 1;
+      // 2. Fallback to Keyword matching (config/industries.js)
+      if (!foundTopLevel) {
+        for (const [industry, keywords] of Object.entries(industryKeywords)) {
+          if (keywords.some((k) => normalizedText.includes(k.toLowerCase()))) {
+            foundTopLevel = industry;
+            break;
           }
         }
+      }
+
+      // 3. Refine Sub-Category (Token-Based Matching)
+      // If we found a Top Level but NO sub-category, try to match sub-categories using loose tokens
+      // This restores the "Computer Software" matching behavior from "software" text
+      if (foundTopLevel && !foundSubName) {
+        if (subcategoriesByTop[foundTopLevel]) {
+          const subs = Object.values(subcategoriesByTop[foundTopLevel]);
+          for (const sub of subs) {
+            // Tokenize sub-category name: "Computer Software" -> ["computer", "software"]
+            const tokens = sub.name.toLowerCase().split(/[\s,&\/-]+/).filter(t => t.length > 2);
+            if (tokens.length === 0) continue;
+
+            // Check if ANY significant token is in the text
+            if (tokens.some(t => normalizedText.includes(t))) {
+              foundSubName = sub.name;
+              break; // Stop at first token match
+            }
+          }
+        }
+      }
+
+      // Final Assignment
+      if (foundTopLevel) {
+        industryCounts[foundTopLevel] = (industryCounts[foundTopLevel] || 0) + 1;
+
+        if (foundSubName) {
+          if (!subIndustryCounts[foundTopLevel]) {
+            subIndustryCounts[foundTopLevel] = {};
+          }
+          subIndustryCounts[foundTopLevel][foundSubName] = (subIndustryCounts[foundTopLevel][foundSubName] || 0) + 1;
+        }
+
+        // Score bonus
+        if (preferredKeywords.some(pk => foundTopLevel.toLowerCase().includes(pk))) {
+          score += 20;
+        }
+      } else {
+        industryCounts['Other'] = (industryCounts['Other'] || 0) + 1;
       }
 
       // Random tie-breaker for consistent sorting if scores are equal
@@ -238,7 +315,7 @@ export async function getDashboardAnalytics(req, res) {
         return {
           industry: name,
           count,
-          code: industryMetaTop[name]?.code || null,
+          code: topLevel[name]?.code || null,
           subCategories,
         };
       })

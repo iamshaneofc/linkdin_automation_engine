@@ -50,6 +50,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { cn } from '../lib/utils';
+import SelfGuidingNote from '../components/SelfGuidingNote';
 
 const PERIODS = [
     { value: 'daily', label: 'Daily' },
@@ -477,187 +478,8 @@ export default function DashboardPage() {
                             {loading ? (
                                 <div className="h-40 flex items-center justify-center text-muted-foreground text-sm">Calculating scores...</div>
                             ) : leadQualityData.length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
-                                    {/* Pyramid / Funnel Chart (Left - 50%) - CUSTOM SVG IMPLEMENTATION */}
-                                    <div className="w-full flex flex-col items-center justify-center p-4">
-                                        <div className="relative w-full max-w-[280px] aspect-[1.2/1]">
-                                            <svg viewBox="0 0 200 160" className="w-full h-full drop-shadow-sm">
-                                                {/* 
-                                                    Triangle Geometry:
-                                                    Top (Green): Tip of the triangle
-                                                    Middle (Blue): Middle trapezoid
-                                                    Bottom (Red): Base trapezoid
-                                                    
-                                                    Total Height: 150 units
-                                                    Base Width: 180 units (at bottom)
-                                                    Center X: 100
-                                                    
-                                                    Calculations for proportional AREAS:
-                                                    Area of triangle = 0.5 * base * height
-                                                    Since triangles are similar, Area is proportional to Height^2
-                                                    Height = sqrt(Area)
-                                                */}
-                                                {(() => {
-                                                    // Calculate total value
-                                                    const total = leadQualityData.reduce((sum, item) => sum + item.value, 0) || 1;
-
-                                                    // Get values for each segment
-                                                    const primaryVal = leadQualityData.find(d => d.id === 'primary')?.value || 0;
-                                                    const secondaryVal = leadQualityData.find(d => d.id === 'secondary')?.value || 0;
-                                                    const tertiaryVal = leadQualityData.find(d => d.id === 'tertiary')?.value || 0;
-
-                                                    // Calculate cumulative proportions (0 to 1)
-                                                    // Top triangle (Green)
-                                                    const p1 = primaryVal / total;
-                                                    // Top + Middle triangle (Green + Blue)
-                                                    const p2 = (primaryVal + secondaryVal) / total;
-
-                                                    // Calculate heights based on AREA (sqrt of proportion)
-                                                    // This ensures visual weight matches data count
-                                                    const h1 = Math.sqrt(p1); // Height of green tip
-                                                    const h2 = Math.sqrt(p2); // Height of green + blue
-
-                                                    // Total dimensions
-                                                    const totalH = 150;
-                                                    const halfBase = 90; // Total base width 180
-
-                                                    // Y-coordinates (0 at top, 150 at bottom)
-                                                    const y0 = 5; // Top padding
-                                                    const y1 = y0 + (h1 * totalH); // Bottom of green
-                                                    const y2 = y0 + (h2 * totalH); // Bottom of blue
-                                                    const y3 = y0 + totalH;        // Bottom of red
-
-                                                    // X-coordinates (spread from center 100)
-                                                    // Width at any y is proportional to y (since it's a triangle)
-                                                    const x1 = h1 * halfBase;
-                                                    const x2 = h2 * halfBase;
-                                                    const x3 = halfBase;
-
-                                                    // Colors
-                                                    const green = "#10b981";
-                                                    const blue = "#3b82f6";
-                                                    const red = "#ef4444"; // New tertiary color
-
-                                                    return (
-                                                        <g>
-                                                            {/* Bottom Segment (Red) - Tertiary */}
-                                                            {tertiaryVal > 0 && (
-                                                                <>
-                                                                    <Tooltip>
-                                                                        <TooltipTrigger asChild>
-                                                                            <path
-                                                                                d={`M ${100 - x3} ${y3} L ${100 + x3} ${y3} L ${100 + x2} ${y2} L ${100 - x2} ${y2} Z`}
-                                                                                fill={red}
-                                                                                stroke="white"
-                                                                                strokeWidth="1"
-                                                                                className="hover:opacity-90 transition-opacity cursor-pointer"
-                                                                            />
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>
-                                                                            <p className="font-bold text-[#ef4444]">Tertiary</p>
-                                                                            <p>{tertiaryVal} leads</p>
-                                                                        </TooltipContent>
-                                                                    </Tooltip>
-                                                                    {/* Label for Tertiary */}
-                                                                    <text
-                                                                        x="100"
-                                                                        y={(y2 + y3) / 2}
-                                                                        textAnchor="middle"
-                                                                        dominantBaseline="middle"
-                                                                        fill="white"
-                                                                        fontSize="11"
-                                                                        fontWeight="600"
-                                                                        className="pointer-events-none"
-                                                                    >
-                                                                        <tspan x="100" dy="-6">{tertiaryVal}</tspan>
-                                                                        <tspan x="100" dy="12" fontSize="9">Tertiary</tspan>
-                                                                    </text>
-                                                                </>
-                                                            )}
-
-                                                            {/* Middle Segment (Blue) - Secondary */}
-                                                            {secondaryVal > 0 && (
-                                                                <>
-                                                                    <Tooltip>
-                                                                        <TooltipTrigger asChild>
-                                                                            <path
-                                                                                d={`M ${100 - x2} ${y2} L ${100 + x2} ${y2} L ${100 + x1} ${y1} L ${100 - x1} ${y1} Z`}
-                                                                                fill={blue}
-                                                                                stroke="white"
-                                                                                strokeWidth="1"
-                                                                                className="hover:opacity-90 transition-opacity cursor-pointer"
-                                                                            />
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>
-                                                                            <p className="font-bold text-[#3b82f6]">Secondary</p>
-                                                                            <p>{secondaryVal} leads</p>
-                                                                        </TooltipContent>
-                                                                    </Tooltip>
-                                                                    {/* Label for Secondary */}
-                                                                    <text
-                                                                        x="100"
-                                                                        y={(y1 + y2) / 2}
-                                                                        textAnchor="middle"
-                                                                        dominantBaseline="middle"
-                                                                        fill="white"
-                                                                        fontSize="11"
-                                                                        fontWeight="600"
-                                                                        className="pointer-events-none"
-                                                                    >
-                                                                        <tspan x="100" dy="-6">{secondaryVal}</tspan>
-                                                                        <tspan x="100" dy="12" fontSize="9">Secondary</tspan>
-                                                                    </text>
-                                                                </>
-                                                            )}
-
-                                                            {/* Top Segment (Green) - Primary */}
-                                                            {primaryVal > 0 && (
-                                                                <>
-                                                                    <Tooltip>
-                                                                        <TooltipTrigger asChild>
-                                                                            <path
-                                                                                d={`M ${100 - x1} ${y1} L ${100 + x1} ${y1} L 100 ${y0} Z`}
-                                                                                fill={green}
-                                                                                stroke="white"
-                                                                                strokeWidth="1"
-                                                                                className="hover:opacity-90 transition-opacity cursor-pointer"
-                                                                            />
-                                                                        </TooltipTrigger>
-                                                                        <TooltipContent>
-                                                                            <p className="font-bold text-[#10b981]">Primary</p>
-                                                                            <p>{primaryVal} leads</p>
-                                                                        </TooltipContent>
-                                                                    </Tooltip>
-                                                                    {/* Label for Primary */}
-                                                                    <text
-                                                                        x="100"
-                                                                        y={(y0 + y1) / 2 + 5}
-                                                                        textAnchor="middle"
-                                                                        dominantBaseline="middle"
-                                                                        fill="white"
-                                                                        fontSize="11"
-                                                                        fontWeight="600"
-                                                                        className="pointer-events-none"
-                                                                    >
-                                                                        <tspan x="100" dy="-6">{primaryVal}</tspan>
-                                                                        <tspan x="100" dy="12" fontSize="9">Primary</tspan>
-                                                                    </text>
-                                                                </>
-                                                            )}
-                                                        </g>
-                                                    );
-                                                })()}
-                                            </svg>
-                                        </div>
-
-                                        <div className="flex items-center gap-4 mt-6 text-xs text-muted-foreground font-medium w-full justify-center">
-                                            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#10b981]"></span>Primary</span>
-                                            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#3b82f6]"></span>Secondary</span>
-                                            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#ef4444]"></span>Tertiary</span>
-                                        </div>
-                                    </div>
-
-                                    {/* KPI Cards (Right) */}
+                                <div className="w-full">
+                                    {/* KPI Cards (Right - Now Full Width) */}
                                     <div className="flex-1 w-full grid grid-cols-1 gap-3">
                                         {leadQualityData.map((item, idx) => (
                                             <div
@@ -722,103 +544,123 @@ export default function DashboardPage() {
                             )}
                         </div>
 
-                        {/* Lead Metrics - Horizontal Bar Chart */}
-                        <div className="rounded-lg border bg-muted/20 p-4 transition-all hover:bg-muted/30">
-                            <div className="flex items-center justify-between mb-4">
-                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                                    <TrendingUp className="h-3.5 w-3.5 text-primary" />
-                                    Lead Metrics
-                                    <InfoTooltip content="Overview of total leads scraped and contact information availability." />
-                                </p>
+                        {/* Metrics Row: Lead Metrics + Connection Type */}
+                        <div className="grid md:grid-cols-2 gap-6">
+                            {/* Lead Metrics - Horizontal Bar Chart */}
+                            <div className="rounded-lg border bg-muted/20 p-4 transition-all hover:bg-muted/30">
+                                <div className="flex items-center justify-between mb-4">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                                        <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                                        Lead Metrics
+                                        <InfoTooltip content="Overview of total leads scraped and contact information availability." />
+                                    </p>
+                                </div>
+
+                                {
+                                    loading ? (
+                                        <div className="h-40 flex items-center justify-center text-muted-foreground text-sm">Loading metrics...</div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {/* Leads - Multi-colored segments (Primary/Secondary/Tertiary) */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between text-sm">
+                                                    <span className="font-medium text-foreground">Leads</span>
+                                                    <span className="font-bold text-foreground">{ls.totalLeads || 0}</span>
+                                                </div>
+                                                <div className="w-full h-8 bg-muted/50 rounded-full overflow-hidden relative flex">
+                                                    {/* Primary segment - Green */}
+                                                    <div
+                                                        className="h-full bg-[#10b981] transition-all duration-1000 ease-out flex items-center justify-center"
+                                                        style={{
+                                                            width: `${ls.totalLeads > 0 ? ((lq.primary || 0) / ls.totalLeads) * 100 : 0}%`
+                                                        }}
+                                                    >
+                                                        {lq.primary > 0 && (
+                                                            <span className="text-xs font-semibold text-white">{lq.primary}</span>
+                                                        )}
+                                                    </div>
+                                                    {/* Secondary segment - Blue */}
+                                                    <div
+                                                        className="h-full bg-[#3b82f6] transition-all duration-1000 ease-out flex items-center justify-center"
+                                                        style={{
+                                                            width: `${ls.totalLeads > 0 ? ((lq.secondary || 0) / ls.totalLeads) * 100 : 0}%`
+                                                        }}
+                                                    >
+                                                        {lq.secondary > 0 && (
+                                                            <span className="text-xs font-semibold text-white">{lq.secondary}</span>
+                                                        )}
+                                                    </div>
+                                                    {/* Tertiary segment - Red */}
+                                                    <div
+                                                        className="h-full bg-[#ef4444] transition-all duration-1000 ease-out flex items-center justify-center"
+                                                        style={{
+                                                            width: `${ls.totalLeads > 0 ? ((lq.tertiary || 0) / ls.totalLeads) * 100 : 0}%`
+                                                        }}
+                                                    >
+                                                        {lq.tertiary > 0 && (
+                                                            <span className="text-xs font-semibold text-white">{lq.tertiary}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                }
                             </div>
 
-                            {
-                                loading ? (
-                                    <div className="h-40 flex items-center justify-center text-muted-foreground text-sm">Loading metrics...</div>
+                            {/* Connection Type */}
+                            <div className="rounded-lg border bg-muted/30 p-4">
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 flex items-center">
+                                    Connection type
+                                    <InfoTooltip content="Distribution of 1st, 2nd, and 3rd degree connections among scraped leads." />
+                                </p>
+                                {loading ? (
+                                    <p className="text-sm text-muted-foreground">Loading…</p>
                                 ) : (
-                                    <div className="space-y-4">
-                                        {/* Leads - Multi-colored segments (Primary/Secondary/Tertiary) */}
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between text-sm">
-                                                <span className="font-medium text-foreground">Leads</span>
-                                                <span className="font-bold text-foreground">{ls.totalLeads || 0}</span>
+                                    <ul className="space-y-3 text-sm">
+                                        <li
+                                            className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors cursor-pointer group"
+                                            onClick={() => navigate('/leads?connection_degree=1st')}
+                                        >
+                                            <span className="flex items-center gap-2 font-medium text-foreground group-hover:text-primary transition-colors">
+                                                <UserCheck className="h-4 w-4 text-primary" />
+                                                1st degree
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-lg font-semibold text-foreground">{connectionData.firstDegree}</span>
+                                                <span className="text-sm text-muted-foreground">({connectionPercentages.firstDegree}%)</span>
                                             </div>
-                                            <div className="w-full h-8 bg-muted/50 rounded-full overflow-hidden relative flex">
-                                                {/* Primary segment - Green */}
-                                                <div
-                                                    className="h-full bg-[#10b981] transition-all duration-1000 ease-out flex items-center justify-center"
-                                                    style={{
-                                                        width: `${ls.totalLeads > 0 ? ((lq.primary || 0) / ls.totalLeads) * 85 : 0}%`
-                                                    }}
-                                                >
-                                                    {lq.primary > 0 && (
-                                                        <span className="text-xs font-semibold text-white">{lq.primary}</span>
-                                                    )}
-                                                </div>
-                                                {/* Secondary segment - Blue */}
-                                                <div
-                                                    className="h-full bg-[#3b82f6] transition-all duration-1000 ease-out flex items-center justify-center"
-                                                    style={{
-                                                        width: `${ls.totalLeads > 0 ? ((lq.secondary || 0) / ls.totalLeads) * 85 : 0}%`
-                                                    }}
-                                                >
-                                                    {lq.secondary > 0 && (
-                                                        <span className="text-xs font-semibold text-white">{lq.secondary}</span>
-                                                    )}
-                                                </div>
-                                                {/* Tertiary segment - Red */}
-                                                <div
-                                                    className="h-full bg-[#ef4444] transition-all duration-1000 ease-out rounded-r-full flex items-center justify-center"
-                                                    style={{
-                                                        width: `${ls.totalLeads > 0 ? ((lq.tertiary || 0) / ls.totalLeads) * 85 : 0}%`
-                                                    }}
-                                                >
-                                                    {lq.tertiary > 0 && (
-                                                        <span className="text-xs font-semibold text-white">{lq.tertiary}</span>
-                                                    )}
-                                                </div>
+                                        </li>
+                                        <li
+                                            className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors cursor-pointer group"
+                                            onClick={() => navigate('/leads?connection_degree=2nd')}
+                                        >
+                                            <span className="flex items-center gap-2 font-medium text-foreground group-hover:text-primary transition-colors">
+                                                <UserPlus className="h-4 w-4 text-primary" />
+                                                2nd degree
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-lg font-semibold text-foreground">{connectionData.secondDegree}</span>
+                                                <span className="text-sm text-muted-foreground">({connectionPercentages.secondDegree}%)</span>
                                             </div>
-                                        </div>
-
-                                        {/* With phone - Blue */}
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between text-sm">
-                                                <span className="font-medium text-foreground">With phone</span>
-                                                <span className="font-bold text-blue-500">{ls.leadsWithPhone || 0}</span>
+                                        </li>
+                                        <li
+                                            className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors cursor-pointer group"
+                                            onClick={() => navigate('/leads?connection_degree=3rd')}
+                                        >
+                                            <span className="flex items-center gap-2 font-medium text-foreground group-hover:text-primary transition-colors">
+                                                <Users className="h-4 w-4 text-primary" />
+                                                3rd degree
+                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-lg font-semibold text-foreground">{connectionData.thirdDegree}</span>
+                                                <span className="text-sm text-muted-foreground">({connectionPercentages.thirdDegree}%)</span>
                                             </div>
-                                            <div className="w-full h-8 bg-muted/50 rounded-full overflow-hidden relative">
-                                                <div
-                                                    className="h-full bg-blue-500 transition-all duration-1000 ease-out rounded-full flex items-center justify-end pr-3"
-                                                    style={{
-                                                        width: `${ls.totalLeads > 0 ? ((ls.leadsWithPhone || 0) / ls.totalLeads) * 85 : 0}%`
-                                                    }}
-                                                >
-                                                    <span className="text-xs font-semibold text-white">{ls.leadsWithPhone || 0}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* With email - Blue */}
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between text-sm">
-                                                <span className="font-medium text-foreground">With email</span>
-                                                <span className="font-bold text-blue-500">{ls.leadsWithEmail || 0}</span>
-                                            </div>
-                                            <div className="w-full h-8 bg-muted/50 rounded-full overflow-hidden relative">
-                                                <div
-                                                    className="h-full bg-blue-500 transition-all duration-1000 ease-out rounded-full flex items-center justify-end pr-3"
-                                                    style={{
-                                                        width: `${ls.totalLeads > 0 ? ((ls.leadsWithEmail || 0) / ls.totalLeads) * 85 : 0}%`
-                                                    }}
-                                                >
-                                                    <span className="text-xs font-semibold text-white">{ls.leadsWithEmail || 0}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )
-                            }
-                        </div >
+                                        </li>
+                                    </ul>
+                                )}
+                            </div>
+                        </div>
 
                         {/* Industry distribution - Full width, larger chart */}
                         < div className="rounded-lg border bg-muted/30 p-6" >
@@ -1164,61 +1006,18 @@ export default function DashboardPage() {
                         </div >
 
                         {/* Extraction + Connection pie */}
-                        < div className="grid md:grid-cols-2 gap-4" >
-                            <div className="rounded-lg border bg-muted/30 p-4 flex flex-col justify-center">
-                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                                    <Rocket className="h-3.5 w-3.5" />
-                                    Extracted this period
-                                    <InfoTooltip content={`Total number of profiles extracted during the ${period} period.`} />
-                                </p>
-                                <p className="text-3xl font-bold">
-                                    {loading ? '—' : (ls.extractionByPeriod?.count ?? 0)}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1 capitalize">{period}</p>
-                            </div>
-                            <div className="rounded-lg border bg-muted/30 p-4">
-                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 flex items-center">
-                                    Connection type
-                                    <InfoTooltip content="Distribution of 1st, 2nd, and 3rd degree connections among scraped leads." />
-                                </p>
-                                {loading ? (
-                                    <p className="text-sm text-muted-foreground">Loading…</p>
-                                ) : (
-                                    <ul className="space-y-3 text-sm">
-                                        <li className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors">
-                                            <span className="flex items-center gap-2 font-medium text-foreground">
-                                                <UserCheck className="h-4 w-4 text-primary" />
-                                                1st degree
-                                            </span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-lg font-semibold text-foreground">{connectionData.firstDegree}</span>
-                                                <span className="text-sm text-muted-foreground">({connectionPercentages.firstDegree}%)</span>
-                                            </div>
-                                        </li>
-                                        <li className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors">
-                                            <span className="flex items-center gap-2 font-medium text-foreground">
-                                                <UserPlus className="h-4 w-4 text-primary" />
-                                                2nd degree
-                                            </span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-lg font-semibold text-foreground">{connectionData.secondDegree}</span>
-                                                <span className="text-sm text-muted-foreground">({connectionPercentages.secondDegree}%)</span>
-                                            </div>
-                                        </li>
-                                        <li className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors">
-                                            <span className="flex items-center gap-2 font-medium text-foreground">
-                                                <Users className="h-4 w-4 text-primary" />
-                                                3rd degree
-                                            </span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-lg font-semibold text-foreground">{connectionData.thirdDegree}</span>
-                                                <span className="text-sm text-muted-foreground">({connectionPercentages.thirdDegree}%)</span>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                )}
-                            </div>
-                        </div >
+                        <div className="rounded-lg border bg-muted/30 p-4 flex flex-col justify-center col-span-2 md:col-span-1">
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                                <Rocket className="h-3.5 w-3.5" />
+                                Extracted this period
+                                <InfoTooltip content={`Total number of profiles extracted during the ${period} period.`} />
+                            </p>
+                            <p className="text-3xl font-bold">
+                                {loading ? '—' : (ls.extractionByPeriod?.count ?? 0)}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1 capitalize">{period}</p>
+                        </div>
+
 
                         {
                             ls.sourceCount && Object.keys(ls.sourceCount).length > 0 && (
@@ -1453,6 +1252,13 @@ export default function DashboardPage() {
                         </CardContent>
                     </Card>
                 </div >
+                <SelfGuidingNote
+                    pageName="Dashboard"
+                    description="Your central command center. View real-time metrics on lead generation, campaign performance, and outreach engagement."
+                    nextPageName="Lead Search"
+                    nextPagePath="/search"
+                    nextPageGlimpse="Find your next ideal customer with powerful search filters."
+                />
             </div >
         </TooltipProvider >
     );

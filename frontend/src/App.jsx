@@ -10,6 +10,7 @@ import CampaignDetailPage from './pages/CampaignDetailPage';
 import ImportsPage from './pages/ImportsPage';
 import ContentEnginePage from './pages/ContentEnginePage';
 import SettingsPage from './pages/SettingsPage';
+import ApprovalsPage from './pages/ApprovalsPage';
 
 function App() {
     return (
@@ -23,7 +24,7 @@ function App() {
                 <Route path="campaigns/:id" element={<CampaignDetailPage />} />
                 <Route path="network" element={<NetworkPage />} />
                 <Route path="content" element={<ContentEnginePage />} />
-                <Route path="approvals" element={<Navigate to="/campaigns" replace />} />
+                <Route path="approvals" element={<ApprovalsPage />} />
                 <Route path="imports" element={<ImportsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Share2, RefreshCw, Download } from 'lucide-react';
 import { useToast } from '../components/ui/toast';
+import SelfGuidingNote from '../components/SelfGuidingNote';
 
 export default function NetworkPage() {
     const { addToast } = useToast();
@@ -87,6 +88,15 @@ export default function NetworkPage() {
                     </table>
                 </div>
             </div>
-        </div>
+
+
+            <SelfGuidingNote
+                pageName="Network"
+                description="View and manage your 1st-degree connections synced from LinkedIn."
+                nextPageName="Settings"
+                nextPagePath="/settings"
+                nextPageGlimpse="Configure your account and integration settings."
+            />
+        </div >
     );
 }

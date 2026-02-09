@@ -98,7 +98,9 @@ function buildAdvancedFilterClause(filterJSON, params) {
         else if (field === 'location') dbCol = 'location';
         else if (field === 'status') dbCol = 'status';
         else if (field === 'source') dbCol = 'source';
+
         else if (field === 'review_status') dbCol = 'review_status'; // PHASE 4: Review status
+        else if (field === 'connection_degree') dbCol = 'connection_degree';
         else if (field === 'created_at') dbCol = 'created_at';
 
         const pIdx = params.length + 1;
@@ -208,6 +210,7 @@ export async function getLeads(req, res) {
       company,
       industry,
       quality, // 'primary', 'secondary', 'tertiary'
+      connection_degree,
       createdFrom,
       createdTo,
     } = req.query;
@@ -258,6 +261,16 @@ export async function getLeads(req, res) {
 
       if (hasLinkedin === "true") {
         conditionClauses.push(`linkedin_url IS NOT NULL AND linkedin_url != ''`);
+      }
+
+      // Connection Degree
+      if (connection_degree && connection_degree.trim()) {
+        const degree = connection_degree.trim();
+        // Handle "1st", "2nd", "3rd" by checking inclusion or equality
+        // Usually PhantomBuster stores "1st", "2nd", "3rd" or "1", "2", "3"
+        conditionClauses.push(`(connection_degree ILIKE $${params.length + 1} OR connection_degree = $${params.length + 2})`);
+        params.push(`%${degree}%`); // Match "1st" in "1st degree"
+        params.push(degree.replace(/\D/g, '')); // Match "1" if just number
       }
 
       // Lead Search–style meta filters (same fields as Lead Search page)
